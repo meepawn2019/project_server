@@ -14,6 +14,7 @@ const {
 // const PersonModel = require("./PersonModel");
 const UserModel = require("../models/user");
 const UserType = require("./type/UserType");
+const UserInputType = require("./type/UserInputType");
 const AdminModel = require("../models/admin");
 const AdminType = require("./type/AdminType");
 const QuestionType = require("./type/QuestionType");
@@ -44,7 +45,19 @@ const schema = new GraphQLSchema({
           if (!context.user) {
             throw new Error("You are not authenticated!");
           }
-          return UserModel.find().exec();
+          return UserModel.find({ role: "Member" }).exec();
+        },
+      },
+      admin: {
+        // the type of response this query will return, here PersonType
+        type: GraphQLList(UserType),
+        // resolver is required
+        resolve: (root, args, context, info) => {
+          // we are returning all persons available in the table in mongodb
+          if (!context.user) {
+            throw new Error("You are not authenticated!");
+          }
+          return UserModel.find({ role: "Admin" }).exec();
         },
       },
       // Query 2
@@ -74,10 +87,13 @@ const schema = new GraphQLSchema({
       userByTime: {
         type: GraphQLList(UserType),
         args: {
-          time: { type: GraphQLString },
+          start: { type: GraphQLString },
+          end: { type: GraphQLString },
         },
         resolve: async (root, args, context, info) => {
-          return await UserModel.find({ createAt: { $lte: args.time } }).sort({
+          return await UserModel.find({
+            createAt: { $lte: args.time, $gte: args.time },
+          }).sort({
             createAt: 1,
           });
         },
@@ -97,7 +113,6 @@ const schema = new GraphQLSchema({
         type: GraphQLList(QuestionType),
         resolve: async (root, args, context, info) => {
           const result = await QuestionModel.find().populate("owner").exec();
-          console.log(result);
           return result;
         },
       },
@@ -119,6 +134,12 @@ const schema = new GraphQLSchema({
           return await CommentModel.find({ question: args.questionId }).exec();
         },
       },
+      comments: {
+        type: GraphQLList(CommentType),
+        resolve: async (root, args, context, info) => {
+          return await CommentModel.find().exec();
+        },
+      },
       reportUser: {
         type: GraphQLList(ReportType),
         resolve: async (root, args, context, info) => {
@@ -128,8 +149,7 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          console.log(await ReportModel.find().exec());
-          return await ReportModel.find()
+          return await ReportModel.find({ status: "Hold" })
             .populate("sender")
             .populate("reportUser")
             .exec();
@@ -174,6 +194,22 @@ const schema = new GraphQLSchema({
           return newUser.save();
         },
       },
+      deleteRoleAdmin: {
+        type: UserType,
+        args: {
+          email: { type: GraphQLString },
+        },
+        resolve: async (root, args, context, info) => {
+          console.log(args.email);
+          const user = await UserModel.findOne({ email: args.email }).exec();
+          console.log(user);
+          if (!user) {
+            throw new Error("User Not Exist!");
+          }
+          user.role = "Member";
+          return user.save();
+        },
+      },
       register: {
         type: UserType,
         args: {
@@ -207,6 +243,9 @@ const schema = new GraphQLSchema({
           if (!valid) {
             throw new Error("Invalid password");
           }
+          if (user.banStatus) {
+            throw new Error("Banned Account");
+          }
           const token = jwt.sign(
             { userId: user.id, role: user.role },
             APP_SECRET
@@ -238,7 +277,6 @@ const schema = new GraphQLSchema({
           const result = await newReport.save();
           const sender = await result.populate("sender").execPopulate();
           const reportUser = await result.populate("reportUser").execPopulate();
-          console.log(result);
           return result;
         },
       },
@@ -250,7 +288,6 @@ const schema = new GraphQLSchema({
         },
         resolve: async (root, args, context, info) => {
           const report = await ReportModel.findById(args.id).exec();
-          console.log(report);
           report.status = args.status;
           return await report.save();
         },
@@ -265,6 +302,32 @@ const schema = new GraphQLSchema({
           const newQuestion = new QuestionModel(args);
           const owner = await newQuestion.populate("owner").execPopulate();
           return await newQuestion.save().populate("owner");
+        },
+      },
+      addAdmin: {
+        type: GraphQLList(UserType),
+        args: {
+          users: { type: GraphQLList(UserInputType) },
+        },
+        resolve: async (root, args, context, info) => {
+          let emailArray = args.users.map((a) => a.email);
+          console.log(emailArray);
+          const users = await UserModel.find()
+            .where("email")
+            .in(emailArray)
+            .exec();
+          console.log(users);
+          // if (!users) {
+          //   throw new Error("User Not Exist!");
+          // }
+          // user.role = "Member";
+          Promise.all(
+            users.map(async (e) => {
+              e.role = "Admin";
+              await e.save();
+            })
+          );
+          return await users;
         },
       },
     },
