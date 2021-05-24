@@ -12,8 +12,8 @@ const { GraphQLDate } = require("graphql-iso-date");
 const UserType = require("./UserType");
 const QuestionType = require("./QuestionType");
 
-const ReportType = new GraphQLObjectType({
-  name: "Report",
+const ReportQuestionType = new GraphQLObjectType({
+  name: "ReportQuestion",
   fields: {
     id: { type: GraphQLID },
     sender: { type: UserType },
@@ -25,4 +25,4 @@ const ReportType = new GraphQLObjectType({
   },
 });
 
-module.exports = ReportType;
+module.exports = ReportQuestionType;

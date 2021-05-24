@@ -21,6 +21,8 @@ const QuestionType = require("./type/QuestionType");
 const QuestionModel = require("../models/question");
 const ReportType = require("./type/ReportType");
 const ReportModel = require("../models/report");
+const ReportQuestionType = require("./type/ReportQuestionType");
+const ReportQuestionModel = require("../models/questionReport");
 const CommentModel = require("../models/comment");
 const CommentType = require("./type/CommentType");
 const AuthPayloadType = require("./type/AuthPayload");
@@ -155,6 +157,21 @@ const schema = new GraphQLSchema({
             .exec();
         },
       },
+      questionReport: {
+        type: GraphQLList(ReportQuestionType),
+        resolve: async (root, args, context, info) => {
+          if (!context.user) {
+            throw new Error("You are not authenticated!");
+          }
+          // if (context.user.role !== "Admin") {
+          //   throw new Error("You do not have permission");
+          // }
+          return await ReportQuestionModel.find({ status: "Hold" })
+            .populate("sender")
+            .populate("reportQuestion")
+            .exec();
+        },
+      },
       reportUserByStatus: {
         type: GraphQLList(ReportType),
         args: {
@@ -280,6 +297,23 @@ const schema = new GraphQLSchema({
           return result;
         },
       },
+      reportQuestionMutation: {
+        type: ReportQuestionType,
+        args: {
+          sender: { type: GraphQLNonNull(GraphQLID) },
+          reportQuestion: { type: GraphQLNonNull(GraphQLID) },
+          content: { type: GraphQLString },
+        },
+        resolve: async (root, args, context, info) => {
+          var newReport = new ReportQuestionModel(args);
+          const result = await newReport.save();
+          const sender = await result.populate("sender").execPopulate();
+          const reportQuestion = await result
+            .populate("reportQuestion")
+            .execPopulate();
+          return result;
+        },
+      },
       updateReportUserMutation: {
         type: ReportType,
         args: {
@@ -288,6 +322,18 @@ const schema = new GraphQLSchema({
         },
         resolve: async (root, args, context, info) => {
           const report = await ReportModel.findById(args.id).exec();
+          report.status = args.status;
+          return await report.save();
+        },
+      },
+      updateReportQuestionMutation: {
+        type: ReportQuestionType,
+        args: {
+          id: { type: GraphQLNonNull(GraphQLID) },
+          status: { type: GraphQLString },
+        },
+        resolve: async (root, args, context, info) => {
+          const report = await ReportQuestionModel.findById(args.id).exec();
           report.status = args.status;
           return await report.save();
         },
