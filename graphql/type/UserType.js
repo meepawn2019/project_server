@@ -14,18 +14,17 @@ const { GraphQLDate } = require("graphql-iso-date");
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: {
-    id: { type: GraphQLID },
+    _id: { type: GraphQLString },
     userName: { type: GraphQLString },
     avatar: { type: GraphQLString },
     bio: { type: GraphQLString },
     friend: { type: GraphQLList(GraphQLID) },
     gender: { type: GraphQLString },
-    password: { type: GraphQLString },
+    birth: { type: GraphQLDate },
     email: { type: GraphQLString },
     banStatus: { type: GraphQLBoolean },
     role: { type: GraphQLString },
     createAt: { type: GraphQLDate },
-    updateAt: { type: GraphQLDate },
   },
 });
 

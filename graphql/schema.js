@@ -43,6 +43,7 @@ const schema = new GraphQLSchema({
         type: GraphQLList(UserType),
         // resolver is required
         resolve: (root, args, context, info) => {
+          console.log(context);
           // we are returning all persons available in the table in mongodb
           if (!context.user) {
             throw new Error("You are not authenticated!");
@@ -151,10 +152,12 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          return await ReportModel.find({ status: "Hold" })
-            .populate("sender")
-            .populate("reportUser")
-            .exec();
+          console.log(
+            await ReportModel.find({ status: "Hold" })
+              .populate("sender")
+              .populate("reportUser")
+              .exec()
+          );
         },
       },
       questionReport: {
@@ -196,19 +199,21 @@ const schema = new GraphQLSchema({
       registerAdmin: {
         type: UserType,
         args: {
-          userName: { type: GraphQLString },
           email: { type: GraphQLString },
-          password: { type: GraphQLString },
-          role: { type: GraphQLString },
         },
         resolve: async (root, args, context, info) => {
-          const user = await UserModel.findOne({ email: args.email }).exec();
-          if (user) {
-            throw new Error("User Exist!");
+          console.log(args.email);
+          const user = await UserModel.updateOne(
+            {
+              email: args.email,
+            },
+            { role: "Admin" }
+          ).exec();
+          console.log(user);
+          if (!user) {
+            throw new Error("User Not Exist!");
           }
-          args.password = await bcrypt.hash(args.password, 10);
-          var newUser = new UserModel(args);
-          return newUser.save();
+          return user;
         },
       },
       deleteRoleAdmin: {
@@ -255,13 +260,6 @@ const schema = new GraphQLSchema({
           const user = await UserModel.findOne({ email: args.email }).exec();
           if (!user) {
             throw new Error("No such user found");
-          }
-          const valid = await bcrypt.compare(args.password, user.password);
-          if (!valid) {
-            throw new Error("Invalid password");
-          }
-          if (user.banStatus) {
-            throw new Error("Banned Account");
           }
           const token = jwt.sign(
             { userId: user.id, role: user.role },
