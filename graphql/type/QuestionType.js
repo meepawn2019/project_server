@@ -16,12 +16,11 @@ const UserType = require("./UserType");
 const QuestionType = new GraphQLObjectType({
   name: "Question",
   fields: {
-    id: { type: GraphQLID },
+    _id: { type: GraphQLID },
     topic: { type: GraphQLList(GraphQLString) },
     question: { type: GraphQLString },
     owner: { type: UserType },
     createAt: { type: GraphQLDate },
-    updateAt: { type: GraphQLDate },
   },
 });
 

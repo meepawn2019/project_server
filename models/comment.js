@@ -12,10 +12,11 @@ const CommentSchema = new Schema(
     owner: { type: ObjectId, ref: "User" },
     question: { type: ObjectId, ref: "Question", require: true },
     createAt: { type: Date, required: true, trim: true, default: Date.now() },
-    updateAt: { type: Date, default: Date.now() },
+    likeCount: { type: Number, default: 0 },
+    dislikeCount: { type: Number, default: 0 },
   },
   { collections: "Comment" }
 );
-const CommentModel = model("Comment", CommentSchema);
+const CommentModel = model("Comment", CommentSchema, "Comment");
 
 module.exports = CommentModel;

@@ -12,14 +12,12 @@ const {
 const { GraphQLDate } = require("graphql-iso-date");
 const UserType = require("./UserType");
 
-const QuestionType = require("./QuestionType");
-
 const ReportType = new GraphQLObjectType({
-  name: "ReportQuestion",
+  name: "ReportUser",
   fields: {
     _id: { type: GraphQLString },
     reporter: { type: UserType },
-    reported: { type: QuestionType },
+    reported: { type: UserType },
     reportDetail: { type: GraphQLList(GraphQLString) },
     status: { type: GraphQLString },
     createAt: { type: GraphQLDate },

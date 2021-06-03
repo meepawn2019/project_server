@@ -9,7 +9,6 @@ const QuestionSchema = new Schema(
     question: { type: String, required: true },
     owner: { type: String, ref: "User", require: true },
     createAt: { type: Date, required: true, trim: true, default: Date.now() },
-    updateAt: { type: Date, default: Date.now() },
   },
   { collections: "Question" }
 );

@@ -17,7 +17,7 @@ const QuestionType = require("./QuestionType");
 const CommentType = new GraphQLObjectType({
   name: "Comment",
   fields: {
-    id: { type: GraphQLID },
+    _id: { type: GraphQLString },
     answer: { type: GraphQLString },
     like: { type: GraphQLList(UserType) },
     dislike: { type: GraphQLList(UserType) },

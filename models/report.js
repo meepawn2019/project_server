@@ -4,9 +4,10 @@ const ObjectId = Schema.ObjectId;
 
 const ReportSchema = new Schema(
   {
-    sender: { type: ObjectId, ref: "User" },
-    reportUser: { type: ObjectId, ref: "User" },
-    content: { type: String, required: true, trim: true },
+    reporter: { type: ObjectId, ref: "User" },
+    reported: { type: ObjectId, refPath: "reportedType" },
+    reportedType: { type: String, enum: ["Question", "User", "Comment"] },
+    reportDetail: { type: Array },
     status: {
       type: String,
       enum: ["Hold", "Solved"],
@@ -14,10 +15,9 @@ const ReportSchema = new Schema(
       default: "Hold",
     },
     createAt: { type: Date, required: true, trim: true, default: Date.now() },
-    updateAt: { type: Date },
   },
-  { collections: "Report" }
+  { collections: "ReportLog" }
 );
-const ReportModel = model("Report", ReportSchema);
+const ReportModel = model("ReportLog", ReportSchema, "ReportLog");
 
 module.exports = ReportModel;

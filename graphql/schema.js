@@ -22,6 +22,7 @@ const QuestionModel = require("../models/question");
 const ReportType = require("./type/ReportType");
 const ReportModel = require("../models/report");
 const ReportQuestionType = require("./type/ReportQuestionType");
+const ReportUserType = require("./type/ReportQuestionType");
 const ReportQuestionModel = require("../models/questionReport");
 const CommentModel = require("../models/comment");
 const CommentType = require("./type/CommentType");
@@ -143,7 +144,7 @@ const schema = new GraphQLSchema({
           return await CommentModel.find().exec();
         },
       },
-      reportUser: {
+      reportedComment: {
         type: GraphQLList(ReportType),
         resolve: async (root, args, context, info) => {
           if (!context.user) {
@@ -152,15 +153,13 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          console.log(
-            await ReportModel.find({ status: "Hold" })
-              .populate("sender")
-              .populate("reportUser")
-              .exec()
-          );
+          return await ReportModel.find({ reportedType: "Comment" })
+            .populate("reporter")
+            .populate("reported")
+            .exec();
         },
       },
-      questionReport: {
+      reportedQuestion: {
         type: GraphQLList(ReportQuestionType),
         resolve: async (root, args, context, info) => {
           if (!context.user) {
@@ -169,9 +168,24 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          return await ReportQuestionModel.find({ status: "Hold" })
-            .populate("sender")
-            .populate("reportQuestion")
+          return await ReportModel.find({ reportedType: "Question" })
+            .populate("reporter")
+            .populate("reported")
+            .exec();
+        },
+      },
+      reportedUser: {
+        type: GraphQLList(ReportUserType),
+        resolve: async (root, args, context, info) => {
+          if (!context.user) {
+            throw new Error("You are not authenticated!");
+          }
+          // if (context.user.role !== "Admin") {
+          //   throw new Error("You do not have permission");
+          // }
+          return await ReportModel.find({ reportedType: "User" })
+            .populate("reporter")
+            .populate("reported")
             .exec();
         },
       },
@@ -295,23 +309,6 @@ const schema = new GraphQLSchema({
           return result;
         },
       },
-      reportQuestionMutation: {
-        type: ReportQuestionType,
-        args: {
-          sender: { type: GraphQLNonNull(GraphQLID) },
-          reportQuestion: { type: GraphQLNonNull(GraphQLID) },
-          content: { type: GraphQLString },
-        },
-        resolve: async (root, args, context, info) => {
-          var newReport = new ReportQuestionModel(args);
-          const result = await newReport.save();
-          const sender = await result.populate("sender").execPopulate();
-          const reportQuestion = await result
-            .populate("reportQuestion")
-            .execPopulate();
-          return result;
-        },
-      },
       updateReportUserMutation: {
         type: ReportType,
         args: {
@@ -331,7 +328,9 @@ const schema = new GraphQLSchema({
           status: { type: GraphQLString },
         },
         resolve: async (root, args, context, info) => {
-          const report = await ReportQuestionModel.findById(args.id).exec();
+          var id = mongoose.Types.ObjectId(args.id);
+          const report = await ReportModel.findById(args.id).exec();
+          console.log(report);
           report.status = args.status;
           return await report.save();
         },

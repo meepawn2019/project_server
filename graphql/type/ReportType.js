@@ -6,21 +6,32 @@ const {
   GraphQLSchema,
   GraphQLNonNull,
   GraphQLType,
+  GraphQLEnumType,
 } = require("graphql");
 
 const { GraphQLDate } = require("graphql-iso-date");
 const UserType = require("./UserType");
+const CommentType = require("./CommentType");
+const QuestionType = require("./QuestionType");
+var ReportEnumType = new GraphQLEnumType({
+  name: "reportEnumType",
+  values: {
+    Comment: { value: CommentType },
+    User: { value: UserType },
+    Question: { value: QuestionType },
+  },
+});
 
 const ReportType = new GraphQLObjectType({
   name: "Report",
   fields: {
-    id: { type: GraphQLID },
-    sender: { type: UserType },
-    reportUser: { type: UserType },
-    content: { type: GraphQLString },
+    _id: { type: GraphQLString },
+    reporter: { type: UserType },
+    reported: { type: CommentType },
+    reportDetail: { type: GraphQLList(GraphQLString) },
     status: { type: GraphQLString },
     createAt: { type: GraphQLDate },
-    updateAt: { type: GraphQLDate },
+    reportType: { type: GraphQLString },
   },
 });
 
