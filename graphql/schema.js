@@ -49,7 +49,7 @@ const schema = new GraphQLSchema({
           if (!context.user) {
             throw new Error("You are not authenticated!");
           }
-          return UserModel.find({ role: "Member" }).exec();
+          return UserModel.find().exec();
         },
       },
       admin: {
@@ -153,7 +153,10 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          return await ReportModel.find({ reportedType: "Comment" })
+          return await ReportModel.find({
+            reportedType: "Comment",
+            status: "Hold",
+          })
             .populate("reporter")
             .populate("reported")
             .exec();
@@ -168,7 +171,10 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          return await ReportModel.find({ reportedType: "Question" })
+          return await ReportModel.find({
+            reportedType: "Question",
+            status: "Hold",
+          })
             .populate("reporter")
             .populate("reported")
             .exec();
@@ -183,7 +189,10 @@ const schema = new GraphQLSchema({
           // if (context.user.role !== "Admin") {
           //   throw new Error("You do not have permission");
           // }
-          return await ReportModel.find({ reportedType: "User" })
+          return await ReportModel.find({
+            reportedType: "User",
+            status: "Hold",
+          })
             .populate("reporter")
             .populate("reported")
             .exec();
