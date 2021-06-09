@@ -49,7 +49,7 @@ const schema = new GraphQLSchema({
           if (!context.user) {
             throw new Error("You are not authenticated!");
           }
-          return UserModel.find().exec();
+          return UserModel.find({ role: "Member" }).exec();
         },
       },
       admin: {
@@ -376,6 +376,7 @@ const schema = new GraphQLSchema({
           Promise.all(
             users.map(async (e) => {
               e.role = "Admin";
+              e.banStatus = false;
               await e.save();
             })
           );
